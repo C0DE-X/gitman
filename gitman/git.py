@@ -194,6 +194,26 @@ def changes(type, include_untracked=False, display_status=True, _show=False):
     return status
 
 
+def am(patch, _skip=False):
+    """Apply a patch.
+
+    :param patch: the patch to be applied
+    :param _skip: skip patch if applying fails
+    """
+    try:
+        git("am", "--3way", patch, _show=True)
+    except ShellError as e:
+        if _skip:
+            # Check if current git am is stuck
+            rebase_dir = git("rev-parse", "--git-path", "rebase-apply", _show=False)
+            if rebase_dir and os.path.isdir(rebase_dir[0]):
+                try:
+                    git("am", "--skip", _show=True, _ignore=True)
+                except ShellError:
+                    pass
+        raise ShellError from e
+
+
 def update(
     type, repo, path, *, clean=True, fetch=False, rev=None
 ):  # pylint: disable=redefined-outer-name,unused-argument
